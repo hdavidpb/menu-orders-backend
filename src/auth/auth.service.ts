@@ -66,10 +66,12 @@ export class AuthService {
 
     //TODO: retornar JWT
 
-    return {
-      ...user,
+    const response = {
+      email: user.email,
       token: this.getJwtToken({ email: user.email, id: user.id }),
     };
+
+    return response;
   }
 
   private getJwtToken(payload: JwtPayload) {
