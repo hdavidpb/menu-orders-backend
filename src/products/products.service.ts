@@ -1,9 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UpdateProductStatus } from './dto/update-product-status';
 
 @Injectable()
 export class ProductsService {
@@ -14,11 +19,8 @@ export class ProductsService {
 
   async create(createProductDto: CreateProductDto) {
     try {
-      // TODO: Guardar imagen
-      const image = 'https://picsum.photos/600/400';
       const product = this.productsRepository.create({
         ...createProductDto,
-        image,
       });
 
       await this.productsRepository.save(product);
@@ -31,19 +33,49 @@ export class ProductsService {
     return 'This action adds a new product';
   }
 
-  handleError(error: any) {
-    if (error.code === '23505') throw new BadRequestException(error.detail);
-
-    console.log(error);
+  async findAll() {
+    try {
+      const products = this.productsRepository.find({
+        order: {
+          createdAt: 'ASC',
+        },
+      });
+      return products;
+    } catch (error) {
+      this.handleError(error);
+    }
   }
 
-  // findAll() {
-  //   return `This action returns all products`;
-  // }
+  async findOne(id: string) {
+    try {
+      const product = await this.productsRepository.findOne({ where: { id } });
 
-  // findOne(id: number) {
-  //   return `This action returns a #${id} product`;
-  // }
+      if (!product)
+        throw new NotFoundException("Product doesn't exist with id: ", id);
+
+      return product;
+    } catch (error) {
+      this.handleError(error);
+    }
+
+    return `This action returns a #${id} product`;
+  }
+
+  async updateProductStatus(id: string, payload: UpdateProductStatus) {
+    try {
+      const product = await this.productsRepository.findOne({ where: { id } });
+
+      if (!product) throw new NotFoundException('Product not found');
+
+      product.isAvailable = payload.status;
+
+      await this.productsRepository.save(product);
+
+      return product;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
 
   // update(id: number, updateProductDto: UpdateProductDto) {
   //   return `This action updates a #${id} product`;
@@ -52,4 +84,10 @@ export class ProductsService {
   // remove(id: number) {
   //   return `This action removes a #${id} product`;
   // }
+
+  handleError(error: any) {
+    if (error.code === '23505') throw new BadRequestException(error.detail);
+
+    console.log(error);
+  }
 }
