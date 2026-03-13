@@ -29,8 +29,24 @@ export class ProductsService {
     } catch (error) {
       this.handleError(error);
     }
+  }
 
-    return 'This action adds a new product';
+  async updateProduct(productId: string, updateProductDto: UpdateProductDto) {
+    try {
+      const product = await this.productsRepository.findOneBy({
+        id: productId,
+      });
+
+      if (!product) throw new NotFoundException('Product not found');
+
+      Object.assign(product, updateProductDto);
+
+      await this.productsRepository.save(product);
+
+      return product;
+    } catch (error) {
+      this.handleError(error);
+    }
   }
 
   async findAll() {
