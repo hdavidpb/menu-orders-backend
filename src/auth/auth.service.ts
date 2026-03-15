@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -13,6 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { JwtService } from '@nestjs/jwt';
+import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class AuthService {
@@ -53,7 +55,13 @@ export class AuthService {
 
     const user = await this.userRepository.findOne({
       where: { email },
-      select: { email: true, password: true, id: true },
+      select: {
+        email: true,
+        password: true,
+        id: true,
+        fullName: true,
+        roles: true,
+      },
     });
 
     if (!user) {
@@ -66,8 +74,33 @@ export class AuthService {
 
     //TODO: retornar JWT
 
+    const { fullName, roles, email: userEmail } = user;
+
     const response = {
-      email: user.email,
+      email: userEmail,
+      fullName,
+      roles,
+      token: this.getJwtToken({ email: user.email, id: user.id }),
+    };
+
+    return response;
+  }
+
+  async checkAuthStatus(userPayload: User) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userPayload.id,
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const { fullName, roles, email: userEmail } = user;
+
+    const response = {
+      email: userEmail,
+      fullName,
+      roles,
       token: this.getJwtToken({ email: user.email, id: user.id }),
     };
 

@@ -3,12 +3,8 @@ import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from './decorators/get-user-decorator';
 import { User } from './entities/auth.entity';
-import { RawHeaders } from './decorators/get-raw-headers.decorator';
-import { UserRoleGuard } from './guards/use-role/use-role.guard';
-import { RoleProtected } from './decorators/role-protected.decorator';
 import { ValidRoles } from './interfaces/valid-roles';
 import { Auth } from './decorators/auth.decorator';
 
@@ -24,6 +20,12 @@ export class AuthController {
   @Post('login')
   loginUser(@Body() loginUserDto: LoginUserDto) {
     return this.authService.loginUser(loginUserDto);
+  }
+
+  @Get('check-status')
+  @Auth()
+  checkAuthStatus(@GetUser() user: User) {
+    return this.authService.checkAuthStatus(user);
   }
 
   @Get('private3')

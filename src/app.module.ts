@@ -22,6 +22,9 @@ import { OrdersModule } from './orders/orders.module';
       autoLoadEntities: true,
       synchronize: true,
       retryAttempts: 1,
+      extra: {
+        options: '-c timezone=America/Bogota',
+      },
     }),
 
     AuthModule,
